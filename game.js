@@ -161,9 +161,9 @@ function update() {
     score += 0.1;
     scoreDisplay.textContent = Math.floor(score).toString().padStart(5, '0');
     
-    // Animate legs when on ground
+    // Animate legs when on ground (slower animation)
     if (dino.grounded) {
-        dino.legFrame += speed * 0.1;
+        dino.legFrame += speed * 0.05;
     }
 }
 
@@ -201,11 +201,17 @@ function draw() {
     ctx.fillStyle = getCSSVariable('--dino-color');
     const legOffset = dino.grounded ? Math.sin(dino.legFrame) * 3 : 4;
     if (dino.grounded) {
-        // Running animation - alternating legs
-        const leftLegY = Math.sin(dino.legFrame) > 0 ? 0 : 4;
-        const rightLegY = Math.sin(dino.legFrame) > 0 ? 4 : 0;
-        ctx.fillRect(dino.x + 10, dino.y + 35 - leftLegY, 6, 5 + leftLegY);
-        ctx.fillRect(dino.x + 22, dino.y + 35 - rightLegY, 6, 5 + rightLegY);
+        // Running animation - legs move back and forth in opposition
+        const sinVal = Math.sin(dino.legFrame);
+        const cosVal = Math.cos(dino.legFrame);
+        // Left leg lifts up and moves forward/back in opposition
+        const leftLegLift = sinVal > 0 ? sinVal * 5 : 0;
+        const leftLegSlide = -cosVal * 3; // inverted direction
+        // Right leg lifts up (opposite phase) and moves opposite direction
+        const rightLegLift = sinVal < 0 ? -sinVal * 5 : 0;
+        const rightLegSlide = cosVal * 3; // inverted direction
+        ctx.fillRect(dino.x + 10 + leftLegSlide, dino.y + 35 - leftLegLift, 6, 5);
+        ctx.fillRect(dino.x + 22 + rightLegSlide, dino.y + 35 - rightLegLift, 6, 5);
     } else {
         // Jumping pose - legs spread (higher by 3px, visible)
         ctx.fillRect(dino.x + 7, dino.y + 32, 6, 5);
