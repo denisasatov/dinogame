@@ -318,7 +318,8 @@
             width: 40,
             height: 40,
             dy: 0,
-            grounded: true
+            grounded: true,
+            legFrame: 0
         };
 
         // Theme switcher
@@ -447,6 +448,11 @@
             speed += SPEED_INCREMENT;
             score += 0.1;
             scoreDisplay.textContent = Math.floor(score).toString().padStart(5, '0');
+            
+            // Animate legs when on ground
+            if (dino.grounded) {
+                dino.legFrame += speed * 0.1;
+            }
         }
 
         function draw() {
@@ -479,9 +485,20 @@
                 ctx.moveTo(sx, sy); ctx.lineTo(sx + 3, sy - 5); ctx.lineTo(sx + 6, sy);
                 ctx.fill();
             }
+            // Legs animation
             ctx.fillStyle = getCSSVariable('--dino-color');
-            ctx.fillRect(dino.x + 10, dino.y + 35, 6, 5);
-            ctx.fillRect(dino.x + 22, dino.y + 35, 6, 5);
+            const legOffset = dino.grounded ? Math.sin(dino.legFrame) * 3 : 4;
+            if (dino.grounded) {
+                // Running animation - alternating legs
+                const leftLegY = Math.sin(dino.legFrame) > 0 ? 0 : 4;
+                const rightLegY = Math.sin(dino.legFrame) > 0 ? 4 : 0;
+                ctx.fillRect(dino.x + 10, dino.y + 35 - leftLegY, 6, 5 + leftLegY);
+                ctx.fillRect(dino.x + 22, dino.y + 35 - rightLegY, 6, 5 + rightLegY);
+            } else {
+                // Jumping pose - legs spread (higher by 3px, visible)
+                ctx.fillRect(dino.x + 7, dino.y + 32, 6, 5);
+                ctx.fillRect(dino.x + 25, dino.y + 32, 6, 5);
+            }
             ctx.fillStyle = getCSSVariable('--dino-eye');
             ctx.fillRect(dino.x + 32, dino.y + 8, 3, 3);
 
