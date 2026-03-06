@@ -9,16 +9,119 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        /* CSS Variables for theming */
+        :root {
+            /* Dark theme (default) */
+            --bg-body: #0f172a;
+            --bg-canvas: #0f172a;
+            --bg-container: #0f172a;
+            --bg-overlay: rgba(15, 23, 42, 0.85);
+            --bg-button: #1e293b;
+            --bg-button-hover: #334155;
+            --bg-kbd: #1e293b;
+            --bg-game-area: #0f172a;
+            --border-color: #334155;
+            --border-game-area: #1e293b;
+            --text-primary: #94a3b8;
+            --text-secondary: #64748b;
+            --text-title: #64748b;
+            --text-subtitle: #475569;
+            --dino-color: #475569;
+            --dino-spike: #64748b;
+            --dino-eye: #94a3b8;
+            --cactus-color: #166534;
+            --bird-color: #86198f;
+            --line-color: #1e293b;
+            --shadow-color: rgba(0, 0, 0, 0.5);
+        }
+
+        /* Light theme */
+        [data-theme="light"] {
+            --bg-body: #f1f5f9;
+            --bg-canvas: #ffffff;
+            --bg-container: #f1f5f9;
+            --bg-overlay: rgba(241, 245, 249, 0.95);
+            --bg-button: #e2e8f0;
+            --bg-button-hover: #cbd5e1;
+            --bg-kbd: #e2e8f0;
+            --bg-game-area: #ffffff;
+            --border-color: #cbd5e1;
+            --border-game-area: #e2e8f0;
+            --text-primary: #475569;
+            --text-secondary: #64748b;
+            --text-title: #334155;
+            --text-subtitle: #64748b;
+            --dino-color: #334155;
+            --dino-spike: #475569;
+            --dino-eye: #64748b;
+            --cactus-color: #22c55e;
+            --bird-color: #a855f7;
+            --line-color: #e2e8f0;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+
+        /* Red theme */
+        [data-theme="red"] {
+            --bg-body: #1a0505;
+            --bg-canvas: #0f0202;
+            --bg-container: #1a0505;
+            --bg-overlay: rgba(26, 5, 5, 0.95);
+            --bg-button: #450a0a;
+            --bg-button-hover: #7f1d1d;
+            --bg-kbd: #450a0a;
+            --bg-game-area: #0f0202;
+            --border-color: #7f1d1d;
+            --border-game-area: #450a0a;
+            --text-primary: #fca5a5;
+            --text-secondary: #f87171;
+            --text-title: #ef4444;
+            --text-subtitle: #dc2626;
+            --dino-color: #991b1b;
+            --dino-spike: #b91c1c;
+            --dino-eye: #fca5a5;
+            --cactus-color: #166534;
+            --bird-color: #be123c;
+            --line-color: #450a0a;
+            --shadow-color: rgba(220, 38, 38, 0.3);
+        }
+
+        /* Neon theme */
+        [data-theme="neon"] {
+            --bg-body: #0a0a0a;
+            --bg-canvas: #050505;
+            --bg-container: #0a0a0a;
+            --bg-overlay: rgba(10, 10, 10, 0.95);
+            --bg-button: #1a1a2e;
+            --bg-button-hover: #16213e;
+            --bg-kbd: #1a1a2e;
+            --bg-game-area: #050505;
+            --border-color: #00ff88;
+            --border-game-area: #00ffff;
+            --text-primary: #00ff88;
+            --text-secondary: #00ffff;
+            --text-title: #ff00ff;
+            --text-subtitle: #00ffff;
+            --dino-color: #00ff88;
+            --dino-spike: #00ffff;
+            --dino-eye: #ff00ff;
+            --cactus-color: #00ff00;
+            --bird-color: #ff00ff;
+            --line-color: #1a1a2e;
+            --shadow-color: rgba(0, 255, 136, 0.3);
+        }
+
         body {
             margin: 0;
-            background-color: #0f172a;
-            color: #94a3b8;
+            background-color: var(--bg-body);
+            color: var(--text-primary);
             font-family: ui-sans-serif, system-ui, sans-serif;
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
             height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
         .font-pixel {
             font-family: 'Press+Start+2P', cursive;
@@ -30,10 +133,11 @@
             padding: 20px;
         }
         canvas {
-            background-color: #0f172a;
+            background-color: var(--bg-canvas);
             width: 100%;
             height: auto;
             display: block;
+            transition: background-color 0.3s ease;
         }
         .overlay {
             position: absolute;
@@ -42,13 +146,66 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: rgba(15, 23, 42, 0.85);
+            background: var(--bg-overlay);
             text-align: center;
             padding: 20px;
             z-index: 20;
+            transition: background 0.3s ease;
         }
         .hidden { display: none !important; }
         #start-overlay { cursor: pointer; }
+        
+        /* Theme switcher styles */
+        .theme-switcher {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+            background: var(--bg-button);
+            padding: 8px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px var(--shadow-color);
+            transition: all 0.3s ease;
+        }
+        
+        .theme-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        
+        .theme-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .theme-btn.active {
+            border-color: var(--text-primary);
+            box-shadow: 0 0 10px var(--shadow-color);
+        }
+        
+        .theme-dark { background: #0f172a; color: #94a3b8; }
+        .theme-light { background: #f1f5f9; color: #475569; }
+        .theme-red { background: #450a0a; color: #fca5a5; }
+        .theme-neon { background: #0a0a0a; color: #00ff88; border: 1px solid #00ff88; }
+        
+        /* Neon theme special effects */
+        [data-theme="neon"] .theme-btn {
+            box-shadow: 0 0 5px currentColor;
+        }
+        
+        [data-theme="neon"] .theme-btn.active {
+            box-shadow: 0 0 15px currentColor, 0 0 30px currentColor;
+        }
     </style>
     <script type="importmap">
     {
@@ -59,45 +216,61 @@
     </script>
 </head>
 <body>
+    <!-- Theme Switcher -->
+    <div class="theme-switcher">
+        <button class="theme-btn theme-dark active" data-theme="dark" title="Тёмная тема">
+            <i class="fas fa-moon"></i>
+        </button>
+        <button class="theme-btn theme-light" data-theme="light" title="Светлая тема">
+            <i class="fas fa-sun"></i>
+        </button>
+        <button class="theme-btn theme-red" data-theme="red" title="Красная тема">
+            <i class="fas fa-fire"></i>
+        </button>
+        <button class="theme-btn theme-neon" data-theme="neon" title="Неоновая тема">
+            <i class="fas fa-bolt"></i>
+        </button>
+    </div>
+
     <div id="game-container">
         <!-- Header -->
         <div class="mb-6 text-center select-none">
-            <h1 class="text-3xl font-pixel text-slate-500 mb-1">DINO ADVENTURE</h1>
-            <p class="text-slate-600 text-sm">Приглушенные тона доисторической эпохи</p>
+            <h1 class="text-3xl font-pixel mb-1" style="color: var(--text-title);">DINO ADVENTURE</h1>
+            <p class="text-sm" style="color: var(--text-subtitle);">Приглушенные тона доисторической эпохи</p>
         </div>
 
         <!-- HUD -->
-        <div class="flex justify-between font-pixel text-[10px] mb-2 px-1 select-none">
+        <div class="flex justify-between font-pixel text-[10px] mb-2 px-1 select-none" style="color: var(--text-primary);">
             <div id="high-score-display">HI 00000</div>
             <div id="score-display">00000</div>
         </div>
 
         <!-- Game Area -->
-        <div class="relative bg-slate-900 rounded-lg overflow-hidden border border-slate-800 shadow-2xl">
+        <div class="relative rounded-lg overflow-hidden shadow-2xl" style="background-color: var(--bg-game-area); border: 1px solid var(--border-game-area);">
             <canvas id="gameCanvas" width="800" height="200"></canvas>
 
             <!-- Overlays -->
             <div id="start-overlay" class="overlay">
                 <div>
-                    <h2 class="text-lg font-pixel text-slate-400 mb-6">START ADVENTURE</h2>
-                    <p class="font-pixel text-[10px] text-slate-600 animate-pulse">КЛИКНИ ИЛИ НАЖМИ SPACE</p>
+                    <h2 class="text-lg font-pixel mb-6" style="color: var(--text-secondary);">START ADVENTURE</h2>
+                    <p class="font-pixel text-[10px] animate-pulse" style="color: var(--text-subtitle);">КЛИКНИ ИЛИ НАЖМИ SPACE</p>
                 </div>
             </div>
 
             <div id="pause-overlay" class="overlay hidden">
                 <div>
-                    <h2 class="text-lg font-pixel text-slate-400 mb-6">ПАУЗА</h2>
-                    <p class="font-pixel text-[10px] text-slate-600 animate-pulse">НАЖМИ ESC ДЛЯ ПРОДОЛЖЕНИЯ</p>
+                    <h2 class="text-lg font-pixel mb-6" style="color: var(--text-secondary);">ПАУЗА</h2>
+                    <p class="font-pixel text-[10px] animate-pulse" style="color: var(--text-subtitle);">НАЖМИ ESC ДЛЯ ПРОДОЛЖЕНИЯ</p>
                 </div>
             </div>
 
             <div id="game-over-overlay" class="overlay hidden">
                 <div class="max-w-md w-full">
-                    <h2 class="text-xl font-pixel text-slate-500 mb-4">КОНЕЦ ПУТИ</h2>
-                    <div class="bg-slate-950/50 p-4 rounded-lg border border-slate-800 mb-6 min-h-[80px] flex items-center justify-center">
-                        <p id="ai-message" class="text-slate-400 italic text-sm leading-relaxed">...</p>
+                    <h2 class="text-xl font-pixel mb-4" style="color: var(--text-title);">КОНЕЦ ПУТИ</h2>
+                    <div class="p-4 rounded-lg border mb-6 min-h-[80px] flex items-center justify-center" style="background-color: var(--bg-button); border-color: var(--border-color);">
+                        <p id="ai-message" class="italic text-sm leading-relaxed" style="color: var(--text-primary);">...</p>
                     </div>
-                    <button id="retry-btn" class="px-8 py-3 bg-slate-800 border border-slate-700 text-slate-400 font-pixel text-[10px] rounded hover:bg-slate-700 transition-all active:scale-95">
+                    <button id="retry-btn" class="px-8 py-3 font-pixel text-[10px] rounded transition-all active:scale-95" style="background-color: var(--bg-button); border: 1px solid var(--border-color); color: var(--text-primary);" onmouseover="this.style.backgroundColor='var(--bg-button-hover)'" onmouseout="this.style.backgroundColor='var(--bg-button)'">
                         ПОПРОБОВАТЬ СНОВА
                     </button>
                 </div>
@@ -105,9 +278,9 @@
         </div>
 
         <!-- Footer -->
-        <div class="mt-6 flex justify-center gap-6 text-slate-600 text-xs select-none">
-            <span class="flex items-center gap-2"><kbd class="bg-slate-900 px-1 border border-slate-800 rounded">Space</kbd> Прыжок</span>
-            <span class="flex items-center gap-2"><kbd class="bg-slate-900 px-1 border border-slate-800 rounded">Esc</kbd> Пауза</span>
+        <div class="mt-6 flex justify-center gap-6 text-xs select-none" style="color: var(--text-secondary);">
+            <span class="flex items-center gap-2"><kbd class="px-1 border rounded" style="background-color: var(--bg-kbd); border-color: var(--border-color);">Space</kbd> Прыжок</span>
+            <span class="flex items-center gap-2"><kbd class="px-1 border rounded" style="background-color: var(--bg-kbd); border-color: var(--border-color);">Esc</kbd> Пауза</span>
             <span class="flex items-center gap-2"><i class="fas fa-robot opacity-40"></i> AI Мудрость</span>
         </div>
     </div>
@@ -147,6 +320,45 @@
             dy: 0,
             grounded: true
         };
+
+        // Theme switcher
+        const themeBtns = document.querySelectorAll('.theme-btn');
+        const root = document.documentElement;
+
+        // Get computed CSS variable value
+        function getCSSVariable(name) {
+            return getComputedStyle(root).getPropertyValue(name).trim();
+        }
+
+        function setTheme(theme) {
+            root.setAttribute('data-theme', theme);
+            localStorage.setItem('dino-theme', theme);
+            
+            // Update active state on buttons
+            themeBtns.forEach(btn => {
+                if (btn.dataset.theme === theme) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            // Redraw canvas with new colors
+            if (status !== 'PLAYING') {
+                draw();
+            }
+        }
+
+        // Load saved theme or use default
+        const savedTheme = localStorage.getItem('dino-theme') || 'dark';
+        setTheme(savedTheme);
+
+        themeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const theme = btn.dataset.theme;
+                setTheme(theme);
+            });
+        });
 
         // Мудрые цитаты динозаврика
         const dinoQuotes = [
@@ -239,7 +451,9 @@
 
         function draw() {
             ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-            ctx.strokeStyle = '#1e293b';
+            
+            // Draw line
+            ctx.strokeStyle = getCSSVariable('--line-color');
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(0, CANVAS_HEIGHT - 1);
@@ -247,7 +461,7 @@
             ctx.stroke();
 
             // Dino
-            ctx.fillStyle = '#475569';
+            ctx.fillStyle = getCSSVariable('--dino-color');
             ctx.fillRect(dino.x + 5, dino.y + 15, 25, 20);
             ctx.fillRect(dino.x + 20, dino.y + 5, 18, 15);
             ctx.fillRect(dino.x + 30, dino.y + 8, 10, 8);
@@ -257,7 +471,7 @@
             ctx.lineTo(dino.x + 5, dino.y + 35);
             ctx.fill();
             // Spikes
-            ctx.fillStyle = '#64748b';
+            ctx.fillStyle = getCSSVariable('--dino-spike');
             for(let i = 0; i < 3; i++) {
                 ctx.beginPath();
                 const sx = dino.x + 8 + (i * 7);
@@ -265,15 +479,15 @@
                 ctx.moveTo(sx, sy); ctx.lineTo(sx + 3, sy - 5); ctx.lineTo(sx + 6, sy);
                 ctx.fill();
             }
-            ctx.fillStyle = '#475569';
+            ctx.fillStyle = getCSSVariable('--dino-color');
             ctx.fillRect(dino.x + 10, dino.y + 35, 6, 5);
             ctx.fillRect(dino.x + 22, dino.y + 35, 6, 5);
-            ctx.fillStyle = '#94a3b8';
+            ctx.fillStyle = getCSSVariable('--dino-eye');
             ctx.fillRect(dino.x + 32, dino.y + 8, 3, 3);
 
             // Obs
             obstacles.forEach(obs => {
-                ctx.fillStyle = obs.type === 'cactus' ? '#166534' : '#86198f';
+                ctx.fillStyle = getCSSVariable(obs.type === 'cactus' ? '--cactus-color' : '--bird-color');
                 ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
             });
         }
