@@ -1,0 +1,301 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dino Adventure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        body {
+            margin: 0;
+            background-color: #0f172a;
+            color: #94a3b8;
+            font-family: ui-sans-serif, system-ui, sans-serif;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        .font-pixel {
+            font-family: 'Press+Start+2P', cursive;
+        }
+        #game-container {
+            width: 100%;
+            max-width: 800px;
+            position: relative;
+            padding: 20px;
+        }
+        canvas {
+            background-color: #0f172a;
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 23, 42, 0.85);
+            text-align: center;
+            padding: 20px;
+            z-index: 20;
+        }
+        .hidden { display: none !important; }
+        #start-overlay { cursor: pointer; }
+    </style>
+    <script type="importmap">
+    {
+      "imports": {
+        "@google/genai": "https://esm.sh/@google/genai@^1.34.0"
+      }
+    }
+    </script>
+</head>
+<body>
+    <div id="game-container">
+        <!-- Header -->
+        <div class="mb-6 text-center select-none">
+            <h1 class="text-3xl font-pixel text-slate-500 mb-1">DINO ADVENTURE</h1>
+            <p class="text-slate-600 text-sm">Приглушенные тона доисторической эпохи</p>
+        </div>
+
+        <!-- HUD -->
+        <div class="flex justify-between font-pixel text-[10px] mb-2 px-1 select-none">
+            <div id="high-score-display">HI 00000</div>
+            <div id="score-display">00000</div>
+        </div>
+
+        <!-- Game Area -->
+        <div class="relative bg-slate-900 rounded-lg overflow-hidden border border-slate-800 shadow-2xl">
+            <canvas id="gameCanvas" width="800" height="200"></canvas>
+
+            <!-- Overlays -->
+            <div id="start-overlay" class="overlay">
+                <div>
+                    <h2 class="text-lg font-pixel text-slate-400 mb-6">START ADVENTURE</h2>
+                    <p class="font-pixel text-[10px] text-slate-600 animate-pulse">КЛИКНИ ИЛИ НАЖМИ SPACE</p>
+                </div>
+            </div>
+
+            <div id="game-over-overlay" class="overlay hidden">
+                <div class="max-w-md w-full">
+                    <h2 class="text-xl font-pixel text-slate-500 mb-4">КОНЕЦ ПУТИ</h2>
+                    <div class="bg-slate-950/50 p-4 rounded-lg border border-slate-800 mb-6 min-h-[80px] flex items-center justify-center">
+                        <p id="ai-message" class="text-slate-400 italic text-sm leading-relaxed">...</p>
+                    </div>
+                    <button id="retry-btn" class="px-8 py-3 bg-slate-800 border border-slate-700 text-slate-400 font-pixel text-[10px] rounded hover:bg-slate-700 transition-all active:scale-95">
+                        ПОПРОБОВАТЬ СНОВА
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-6 flex justify-center gap-6 text-slate-600 text-xs select-none">
+            <span class="flex items-center gap-2"><kbd class="bg-slate-900 px-1 border border-slate-800 rounded">Space</kbd> Прыжок</span>
+            <span class="flex items-center gap-2"><i class="fas fa-robot opacity-40"></i> AI Мудрость</span>
+        </div>
+    </div>
+
+    <script type="module">
+        // DOM Элементы
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('score-display');
+        const highScoreDisplay = document.getElementById('high-score-display');
+        const startOverlay = document.getElementById('start-overlay');
+        const gameOverOverlay = document.getElementById('game-over-overlay');
+        const aiMessageDisplay = document.getElementById('ai-message');
+        const retryBtn = document.getElementById('retry-btn');
+
+        // Константы
+        const CANVAS_WIDTH = 800;
+        const CANVAS_HEIGHT = 200;
+        const GRAVITY = 0.8;
+        const JUMP_FORCE = -14;
+        const INITIAL_SPEED = 5;
+        const SPEED_INCREMENT = 0.0007;
+
+        // Состояние
+        let status = 'IDLE';
+        let score = 0;
+        let highScore = 0;
+        let speed = INITIAL_SPEED;
+        let frameCount = 0;
+        let obstacles = [];
+        let dino = {
+            x: 50,
+            y: CANVAS_HEIGHT - 50,
+            width: 40,
+            height: 40,
+            dy: 0,
+            grounded: true
+        };
+
+        // Мудрые цитаты динозаврика
+        const dinoQuotes = [
+            "Дорога важнее цели.",
+            "Каждое падение — это начало нового прыжка.",
+            "Препятствия делают нас сильнее.",
+            "Главное — не сдаваться.",
+            "Путь в тысячу миль начинается с одного шага.",
+            "Ошибки — лучшие учителя.",
+            "Терпение и труд всё перетрут.",
+            "Не важно, как медленно ты идёшь.",
+            "Падать — не значит проигрывать.",
+            "Каждая попытка приближает к победе."
+        ];
+
+        function getDinoWisdom() {
+            return dinoQuotes[Math.floor(Math.random() * dinoQuotes.length)];
+        }
+
+        function resetGame() {
+            score = 0;
+            speed = INITIAL_SPEED;
+            frameCount = 0;
+            obstacles = [];
+            dino.y = CANVAS_HEIGHT - dino.height;
+            dino.dy = 0;
+            dino.grounded = true;
+            status = 'PLAYING';
+            
+            startOverlay.classList.add('hidden');
+            gameOverOverlay.classList.add('hidden');
+            scoreDisplay.textContent = "00000";
+            requestAnimationFrame(gameLoop);
+        }
+
+        function handleGameOver() {
+            status = 'GAME_OVER';
+            gameOverOverlay.classList.remove('hidden');
+            
+            const finalScore = Math.floor(score);
+            if (finalScore > highScore) {
+                highScore = finalScore;
+                highScoreDisplay.textContent = `HI ${highScore.toString().padStart(5, '0')}`;
+            }
+
+            const message = getDinoWisdom();
+            aiMessageDisplay.textContent = message;
+        }
+
+        function update() {
+            if (status !== 'PLAYING') return;
+
+            if (!dino.grounded) {
+                dino.dy += GRAVITY;
+                dino.y += dino.dy;
+            }
+            if (dino.y > CANVAS_HEIGHT - dino.height) {
+                dino.y = CANVAS_HEIGHT - dino.height;
+                dino.dy = 0;
+                dino.grounded = true;
+            }
+
+            frameCount++;
+            if (frameCount % Math.floor(130 / (speed / 5)) === 0) {
+                const type = Math.random() > 0.8 ? 'bird' : 'cactus';
+                const h = type === 'cactus' ? 25 + Math.random() * 20 : 25;
+                const y = type === 'cactus' ? CANVAS_HEIGHT - h : CANVAS_HEIGHT - 70 - Math.random() * 30;
+                obstacles.push({ x: CANVAS_WIDTH, y, width: 20, height: h, type });
+            }
+
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obs = obstacles[i];
+                obs.x -= speed;
+                if (
+                    dino.x + 12 < obs.x + obs.width - 4 &&
+                    dino.x + dino.width - 12 > obs.x + 4 &&
+                    dino.y + 10 < obs.y + obs.height - 4 &&
+                    dino.y + dino.height - 4 > obs.y + 4
+                ) {
+                    handleGameOver();
+                    return;
+                }
+                if (obs.x + obs.width < 0) obstacles.splice(i, 1);
+            }
+
+            speed += SPEED_INCREMENT;
+            score += 0.1;
+            scoreDisplay.textContent = Math.floor(score).toString().padStart(5, '0');
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, CANVAS_HEIGHT - 1);
+            ctx.lineTo(CANVAS_WIDTH, CANVAS_HEIGHT - 1);
+            ctx.stroke();
+
+            // Dino
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(dino.x + 5, dino.y + 15, 25, 20);
+            ctx.fillRect(dino.x + 20, dino.y + 5, 18, 15);
+            ctx.fillRect(dino.x + 30, dino.y + 8, 10, 8);
+            ctx.beginPath();
+            ctx.moveTo(dino.x + 5, dino.y + 20);
+            ctx.lineTo(dino.x - 8, dino.y + 32);
+            ctx.lineTo(dino.x + 5, dino.y + 35);
+            ctx.fill();
+            // Spikes
+            ctx.fillStyle = '#64748b';
+            for(let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                const sx = dino.x + 8 + (i * 7);
+                const sy = dino.y + 15;
+                ctx.moveTo(sx, sy); ctx.lineTo(sx + 3, sy - 5); ctx.lineTo(sx + 6, sy);
+                ctx.fill();
+            }
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(dino.x + 10, dino.y + 35, 6, 5);
+            ctx.fillRect(dino.x + 22, dino.y + 35, 6, 5);
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillRect(dino.x + 32, dino.y + 8, 3, 3);
+
+            // Obs
+            obstacles.forEach(obs => {
+                ctx.fillStyle = obs.type === 'cactus' ? '#166534' : '#86198f';
+                ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+            });
+        }
+
+        function gameLoop() {
+            if (status !== 'PLAYING') return;
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function handleJump(e) {
+            if (e) e.preventDefault();
+            if (status === 'PLAYING' && dino.grounded) {
+                dino.dy = JUMP_FORCE;
+                dino.grounded = false;
+            } else if (status === 'IDLE') {
+                resetGame();
+            }
+        }
+
+        // Listeners
+        window.addEventListener('keydown', (e) => {
+            if (['Space', 'ArrowUp', 'KeyW'].includes(e.code)) handleJump(e);
+        });
+        canvas.addEventListener('mousedown', handleJump);
+        canvas.addEventListener('touchstart', handleJump);
+        startOverlay.addEventListener('mousedown', () => { if(status === 'IDLE') resetGame(); });
+        retryBtn.addEventListener('click', (e) => { e.stopPropagation(); resetGame(); });
+
+        draw();
+    </script>
+</body>
+</html>
