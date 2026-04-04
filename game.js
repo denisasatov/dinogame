@@ -10,12 +10,34 @@ const aiMessageDisplay = document.getElementById('ai-message');
 const retryBtn = document.getElementById('retry-btn');
 
 // Constants
-const CANVAS_WIDTH = 800;
-const CANVAS_HEIGHT = 200;
+let CANVAS_WIDTH = 800;
+let CANVAS_HEIGHT = 200;
 const GRAVITY = 0.8;
 const JUMP_FORCE = -14;
 const INITIAL_SPEED = 5;
 const SPEED_INCREMENT = 0.0007;
+
+// Responsive canvas for mobile
+function resizeCanvas() {
+    const container = document.getElementById('game-container');
+    const gameArea = container ? container.querySelector('.relative') : null;
+    if (gameArea) {
+        const rect = gameArea.getBoundingClientRect();
+        const newWidth = Math.floor(rect.width);
+        const aspectRatio = 200 / 800;
+        const newHeight = Math.floor(newWidth * aspectRatio);
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+        CANVAS_WIDTH = newWidth;
+        CANVAS_HEIGHT = newHeight;
+        dino.y = CANVAS_HEIGHT - dino.height;
+    }
+}
+
+window.addEventListener('resize', resizeCanvas);
+window.addEventListener('load', () => {
+    setTimeout(resizeCanvas, 100);
+});
 
 // State
 let status = 'IDLE';
@@ -26,13 +48,17 @@ let frameCount = 0;
 let obstacles = [];
 let dino = {
     x: 50,
-    y: CANVAS_HEIGHT - 50,
+    y: 200 - 50,
     width: 40,
     height: 40,
     dy: 0,
     grounded: true,
     legFrame: 0
 };
+
+// Expose status for Telegram integration
+window.gameStatus = status;
+window.togglePause = togglePause;
 
 // Theme switcher
 const themeBtns = document.querySelectorAll('.theme-btn');
@@ -100,6 +126,7 @@ function resetGame() {
     dino.dy = 0;
     dino.grounded = true;
     status = 'PLAYING';
+    window.gameStatus = status;
     
     startOverlay.classList.add('hidden');
     gameOverOverlay.classList.add('hidden');
@@ -109,12 +136,18 @@ function resetGame() {
 
 function handleGameOver() {
     status = 'GAME_OVER';
+    window.gameStatus = status;
     gameOverOverlay.classList.remove('hidden');
     
     const finalScore = Math.floor(score);
     if (finalScore > highScore) {
         highScore = finalScore;
         highScoreDisplay.textContent = `HI ${highScore.toString().padStart(5, '0')}`;
+    }
+
+    // Haptic feedback for Telegram
+    if (window.tg?.HapticFeedback) {
+        window.tg.HapticFeedback.notificationOccurred('error');
     }
 
     const message = getDinoWisdom();
@@ -256,9 +289,14 @@ window.addEventListener('keydown', (e) => {
 function togglePause() {
     if (status === 'PLAYING') {
         status = 'PAUSED';
+        window.gameStatus = status;
         pauseOverlay.classList.remove('hidden');
+        if (window.tg?.HapticFeedback) {
+            window.tg.HapticFeedback.impactOccurred('light');
+        }
     } else if (status === 'PAUSED') {
         status = 'PLAYING';
+        window.gameStatus = status;
         pauseOverlay.classList.add('hidden');
         requestAnimationFrame(gameLoop);
     }
